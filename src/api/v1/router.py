@@ -2,9 +2,10 @@
 
 from fastapi import APIRouter
 
-from src.api.v1 import rooms, reservations
+from src.api.v1 import rooms, reservations, analytics
 
 api_router = APIRouter(prefix="/v1")
 
 api_router.include_router(rooms.router)
 api_router.include_router(reservations.router)
+api_router.include_router(analytics.router)

@@ -264,6 +264,7 @@ $RECYCLE.BIN/
 /media/
 /static/
 /staticfiles/
+analytics_logs/
 
 # Temporary files
 *.tmp

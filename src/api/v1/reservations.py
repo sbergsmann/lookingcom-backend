@@ -5,6 +5,7 @@ import logfire
 
 from src.schemas.reservation import ReservationRequest, ReservationResponse
 from src.services.capcorn_client import CapCornClient
+from src.services.analytics_service import get_analytics_service
 
 router = APIRouter(prefix="/reservations", tags=["reservations"])
 
@@ -27,6 +28,10 @@ async def create_reservation(request: ReservationRequest):
     - **source**: Source/channel name (default: LookingCom)
     """
     try:
+        # Log analytics
+        analytics = get_analytics_service()
+        await analytics.log_reservation(request.model_dump(mode="json"))
+        
         client = CapCornClient()
         logfire.info(f"Creating reservation with request: {request.model_dump()}")
         response = await client.create_reservation(request)

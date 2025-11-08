@@ -17,6 +17,7 @@ from src.schemas.simplified_search import (
     Language,
 )
 from src.services.capcorn_client import CapCornClient
+from src.services.analytics_service import get_analytics_service
 from src.core.config import get_settings
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -40,6 +41,11 @@ async def search_rooms(request: SimplifiedRoomSearchRequest):
     4 parallel queries will be made covering all possible 4-day stays.
     """
     logfire.info(f"Simplified Room Search Request: {request.model_dump()}")
+    
+    # Log analytics
+    analytics = get_analytics_service()
+    await analytics.log_room_search(request.model_dump(mode="json"))
+    
     try:
         settings = get_settings()
         client = CapCornClient()
