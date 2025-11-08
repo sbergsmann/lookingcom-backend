@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.121.0",
+    "logfire[fastapi,httpx]>=4.14.2",
     "pydantic>=2.12.4",
     "pydantic-settings>=2.11.0",
 ]

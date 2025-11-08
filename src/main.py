@@ -1,5 +1,6 @@
 """FastAPI application entry point"""
 
+import logfire
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,6 +9,16 @@ from src.api.v1.router import api_router
 
 settings = get_settings()
 
+# Configure Logfire
+if settings.logfire_api_key:
+    logfire.configure(
+        token=settings.logfire_api_key,
+        service_name=settings.app_name,
+        service_version=settings.app_version,
+    )
+    # Instrument httpx for external API calls logging
+    logfire.instrument_httpx()
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
@@ -15,6 +26,17 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Instrument FastAPI with Logfire (logs all requests, responses, and bodies)
+if settings.logfire_api_key:
+    logfire.instrument_fastapi(
+        app,
+        capture_headers=True,
+        request_attributes_mapper=lambda request: {
+            "custom.path": request.url.path,
+            "custom.method": request.method,
+        },
+    )
 
 # CORS middleware
 app.add_middleware(
