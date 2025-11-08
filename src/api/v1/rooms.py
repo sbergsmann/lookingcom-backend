@@ -2,6 +2,7 @@
 
 import asyncio
 from fastapi import APIRouter, HTTPException, status
+import logfire
 
 from src.schemas.room_availability import (
     RoomAvailabilityRequest,
@@ -38,6 +39,7 @@ async def search_rooms(request: SimplifiedRoomSearchRequest):
     Example: If timespan is 7 days and duration is 4 days, 
     4 parallel queries will be made covering all possible 4-day stays.
     """
+    logfire.info(f"Simplified Room Search Request: {request.model_dump()}")
     try:
         settings = get_settings()
         client = CapCornClient()
@@ -105,6 +107,8 @@ async def search_rooms(request: SimplifiedRoomSearchRequest):
                             )
                         )
         
+        logfire.info(f"Simplified Room Search found {len(all_options)} options across {len(date_ranges)} queries.")
+        logfire.info(f"Room Search Response: {all_options}")
         return SimplifiedRoomSearchResponse(
             total_queries=len(date_ranges),
             total_options=len(all_options),

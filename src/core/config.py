@@ -22,12 +22,21 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: str = "*"
-    cors_origins_list: list[str] = []
+    
+    # Logfire Configuration
+    logfire_api_key: str = ""
     
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False
     )
+    
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Get CORS origins as a list"""
+        if self.cors_origins == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.cors_origins.split(",")]
 
 @lru_cache()
 def get_settings() -> Settings:

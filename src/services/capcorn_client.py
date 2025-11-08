@@ -189,7 +189,7 @@ class CapCornClient:
         
         # BasicPropertyInfo
         basic_property = ET.SubElement(room_stay, "BasicPropertyInfo")
-        basic_property.set("HotelCode", request.hotel_id)
+        basic_property.set("HotelCode", self.settings.capcorn_hotel_id)
         
         # Services
         if request.services:
@@ -253,7 +253,7 @@ class CapCornClient:
         """Create a new reservation"""
         url = f"{self.base_url}/OTA_HotelResNotifRQ"
         params = {
-            "hotelId": request.hotel_id,
+            "hotelId": self.settings.capcorn_hotel_id,
             "pin": self.settings.capcorn_pin,
         }
         

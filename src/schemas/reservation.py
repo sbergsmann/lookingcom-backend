@@ -49,10 +49,9 @@ class GuestInfo(BaseModel):
 
 class ReservationRequest(BaseModel):
     """Complete reservation/booking request"""
-    hotel_id: str = Field(..., description="CapCorn Hotel ID")
     room_type_code: str = Field(..., max_length=8, description="Room category code")
     number_of_units: int = Field(1, ge=1, description="Number of rooms to book")
-    meal_plan: MealPlan = Field(..., description="Included meals")
+    meal_plan: MealPlan = Field(MealPlan.BREAKFAST, description="Included meals (default: Breakfast)")
     guest_counts: list[GuestCount] = Field(..., min_length=1)
     arrival: date
     departure: date
@@ -61,7 +60,7 @@ class ReservationRequest(BaseModel):
     services: list[ServiceRequest] = Field(default_factory=list)
     booking_comment: Optional[str] = Field(None, max_length=200)
     reservation_id: str = Field(..., description="Unique booking ID in your system")
-    source: str = Field("Hackathon", description="Source/channel name")
+    source: str = Field("LookingCom", description="Source/channel name")
     
     @field_validator("departure")
     @classmethod
