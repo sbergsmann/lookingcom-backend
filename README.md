@@ -268,76 +268,22 @@ DEBUG=False
 
 # CapCorn API Configuration
 CAPCORN_BASE_URL=https://mainframe.capcorn.net/RestService
-CAPCORN_SYSTEM=ttf-hackathon
-CAPCORN_USER=ttf
-CAPCORN_PASSWORD=your_password
-CAPCORN_HOTEL_ID=9100
-CAPCORN_PIN=your_pin
+CAPCORN_SYSTEM=...
+CAPCORN_USER=...
+CAPCORN_PASSWORD=...
+CAPCORN_HOTEL_ID=...
+CAPCORN_PIN=...
 
 # CORS (comma-separated list or *)
 CORS_ORIGINS=*
 ```
 
-### Meal Plans
-
-| Code | Description |
-|------|-------------|
-| 1    | Breakfast |
-| 2    | Half Board |
-| 3    | Full Board |
-| 4    | No Meals |
-| 5    | All Inclusive |
-
-### Room Types
-
-| Code | Description |
-|------|-------------|
-| 1    | Hotel Room |
-| 2    | Apartment / Holiday Home |
-
 ## 🛠️ Development
-
-### Running Tests
-
-```bash
-uv run pytest
-```
-
-### Code Formatting
-
-```bash
-uv run black src/
-uv run isort src/
-```
-
-### Type Checking
-
-```bash
-uv run mypy src/
-```
 
 ### Running with Hot Reload
 
 ```bash
 uv run fastapi dev src/main.py
-```
-
-## 🐳 Deployment
-
-### Docker Support
-
-```bash
-# Build image
-docker build -t lookingcom-backend .
-
-# Run container
-docker run -p 8000:8000 --env-file .env lookingcom-backend
-```
-
-### Docker Compose
-
-```bash
-docker-compose up -d
 ```
 
 ### Production Considerations
@@ -361,26 +307,6 @@ The API endpoints are consumed by Model Context Protocol (MCP) servers that:
 - Provide natural language interfaces to the data
 - Power conversational analytics experiences
 
-### 📈 Dashboard Metrics
-
-Data served to the Looking.com analytics dashboard includes:
-
-- **Booking Trends**: Daily, weekly, monthly reservation counts
-- **Revenue Analytics**: Total bookings value, average booking size
-- **Room Performance**: Most popular room categories and types
-- **Customer Insights**: Guest demographics, booking lead times
-- **Seasonal Patterns**: Peak and off-peak periods identification
-- **Conversion Metrics**: Search-to-booking conversion rates
-
-### 🔮 Future Analytics Features
-
-- Real-time booking notifications
-- Predictive pricing recommendations
-- Customer segmentation analysis
-- Competitive benchmarking
-- Dynamic pricing optimization
-- Availability forecasting
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -391,19 +317,27 @@ Data served to the Looking.com analytics dashboard includes:
 
 ## 📝 License
 
-This project is proprietary software developed for Looking.com.
+MIT License
 
-## 🙏 Acknowledgments
+Copyright (c) 2025 Looking.com
 
-- Built with [FastAPI](https://fastapi.tiangolo.com/)
-- Powered by [UV](https://github.com/astral-sh/uv)
-- Integrates with [CapCorn Hotel Management System](https://capcorn.at/)
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-## 📞 Support
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-For questions or issues:
-- Create an issue on GitHub
-- Contact: dev@looking.com
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ---
 
