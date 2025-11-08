@@ -277,6 +277,9 @@ secrets.json
 *.key
 *.cert
 
+# API Documentation (contains credentials)
+.github/instructions/api.instructions.md
+
 # Alembic (database migrations)
 alembic/versions/*.pyc
 
