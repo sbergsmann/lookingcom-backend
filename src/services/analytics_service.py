@@ -1,11 +1,10 @@
 """Analytics service for tracking searches and bookings"""
 
-import json
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any
 import asyncio
 from pydantic import BaseModel
+from collections import deque
 
 
 class AnalyticsEvent(BaseModel):
@@ -16,13 +15,17 @@ class AnalyticsEvent(BaseModel):
 
 
 class AnalyticsService:
-    """Service for logging and retrieving analytics data"""
+    """Service for logging and retrieving analytics data (in-memory)"""
     
-    def __init__(self, log_dir: str = "analytics_logs"):
-        self.log_dir = Path(log_dir)
-        self.log_dir.mkdir(exist_ok=True)
-        self.search_log_file = self.log_dir / "room_searches.jsonl"
-        self.reservation_log_file = self.log_dir / "reservations.jsonl"
+    def __init__(self, max_events: int = 10000):
+        """
+        Initialize analytics service with in-memory storage.
+        
+        Args:
+            max_events: Maximum number of events to keep in memory per type
+        """
+        self._room_searches: deque[AnalyticsEvent] = deque(maxlen=max_events)
+        self._reservations: deque[AnalyticsEvent] = deque(maxlen=max_events)
         self._lock = asyncio.Lock()
     
     async def log_room_search(self, search_data: dict[str, Any]) -> None:
@@ -32,7 +35,8 @@ class AnalyticsService:
             event_type="room_search",
             data=search_data
         )
-        await self._write_log(self.search_log_file, event)
+        async with self._lock:
+            self._room_searches.append(event)
     
     async def log_reservation(self, reservation_data: dict[str, Any]) -> None:
         """Log a reservation event"""
@@ -41,49 +45,42 @@ class AnalyticsService:
             event_type="reservation",
             data=reservation_data
         )
-        await self._write_log(self.reservation_log_file, event)
-    
-    async def _write_log(self, file_path: Path, event: AnalyticsEvent) -> None:
-        """Write event to log file (JSONL format)"""
         async with self._lock:
-            with open(file_path, "a", encoding="utf-8") as f:
-                json_str = json.dumps({
-                    "timestamp": event.timestamp.isoformat(),
-                    "event_type": event.event_type,
-                    "data": event.data
-                })
-                f.write(json_str + "\n")
+            self._reservations.append(event)
     
     async def get_room_searches(self, hours: int = 24) -> list[dict[str, Any]]:
         """Get room searches from the last N hours"""
-        return await self._read_logs(self.search_log_file, hours)
+        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        
+        async with self._lock:
+            filtered_events = [
+                {
+                    "timestamp": event.timestamp.isoformat(),
+                    "event_type": event.event_type,
+                    "data": event.data
+                }
+                for event in self._room_searches
+                if event.timestamp >= cutoff_time
+            ]
+        
+        return filtered_events
     
     async def get_reservations(self, hours: int = 24) -> list[dict[str, Any]]:
         """Get reservations from the last N hours"""
-        return await self._read_logs(self.reservation_log_file, hours)
-    
-    async def _read_logs(self, file_path: Path, hours: int) -> list[dict[str, Any]]:
-        """Read logs from file and filter by timespan"""
-        if not file_path.exists():
-            return []
-        
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-        events = []
         
         async with self._lock:
-            with open(file_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        event = json.loads(line.strip())
-                        event_time = datetime.fromisoformat(event["timestamp"])
-                        
-                        if event_time >= cutoff_time:
-                            events.append(event)
-                    except (json.JSONDecodeError, KeyError, ValueError):
-                        # Skip malformed lines
-                        continue
+            filtered_events = [
+                {
+                    "timestamp": event.timestamp.isoformat(),
+                    "event_type": event.event_type,
+                    "data": event.data
+                }
+                for event in self._reservations
+                if event.timestamp >= cutoff_time
+            ]
         
-        return events
+        return filtered_events
     
     async def get_analytics_summary(self, hours: int = 24) -> dict[str, Any]:
         """Get analytics summary for the specified timespan"""
@@ -101,11 +98,15 @@ class AnalyticsService:
             for res in reservations
         )
         
-        # Get popular destinations (room types)
-        room_types = {}
+        # Get popular durations from searches
+        room_durations = {}
         for search in searches:
             duration = search.get("data", {}).get("duration", 0)
-            room_types[duration] = room_types.get(duration, 0) + 1
+            if duration > 0:
+                room_durations[duration] = room_durations.get(duration, 0) + 1
+        
+        # Get average booking value
+        avg_booking_value = total_revenue / total_reservations if total_reservations > 0 else 0
         
         return {
             "timespan_hours": hours,
@@ -113,10 +114,23 @@ class AnalyticsService:
             "total_reservations": total_reservations,
             "conversion_rate": round(conversion_rate, 2),
             "total_revenue": round(total_revenue, 2),
-            "popular_durations": dict(sorted(room_types.items(), key=lambda x: x[1], reverse=True)[:5]),
+            "average_booking_value": round(avg_booking_value, 2),
+            "popular_durations": dict(sorted(room_durations.items(), key=lambda x: x[1], reverse=True)[:5]),
             "searches": searches,
             "reservations": reservations
         }
+    
+    async def get_stats(self) -> dict[str, Any]:
+        """Get overall statistics about stored events"""
+        async with self._lock:
+            return {
+                "total_searches_in_memory": len(self._room_searches),
+                "total_reservations_in_memory": len(self._reservations),
+                "oldest_search": self._room_searches[0].timestamp.isoformat() if self._room_searches else None,
+                "newest_search": self._room_searches[-1].timestamp.isoformat() if self._room_searches else None,
+                "oldest_reservation": self._reservations[0].timestamp.isoformat() if self._reservations else None,
+                "newest_reservation": self._reservations[-1].timestamp.isoformat() if self._reservations else None,
+            }
 
 
 # Singleton instance

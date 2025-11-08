@@ -16,6 +16,7 @@ async def get_analytics_summary(
     Get analytics summary for room searches and reservations.
     
     Returns aggregated statistics and detailed logs for the specified timespan.
+    Data is stored in-memory, so only events since the last server restart are available.
     
     - **hours**: Number of hours to look back (1-24, default: 24)
     
@@ -23,6 +24,7 @@ async def get_analytics_summary(
     - Total searches and reservations
     - Conversion rate
     - Total revenue
+    - Average booking value
     - Popular durations
     - Detailed search and reservation logs
     """
@@ -36,6 +38,8 @@ async def get_room_searches(
 ):
     """
     Get room search logs for the specified timespan.
+    
+    Data is stored in-memory (max 10,000 events per type).
     
     - **hours**: Number of hours to look back (1-24, default: 24)
     """
@@ -55,6 +59,8 @@ async def get_reservations(
     """
     Get reservation logs for the specified timespan.
     
+    Data is stored in-memory (max 10,000 events per type).
+    
     - **hours**: Number of hours to look back (1-24, default: 24)
     """
     analytics = get_analytics_service()
@@ -72,3 +78,14 @@ async def get_reservations(
         "total_revenue": round(total_revenue, 2),
         "reservations": reservations
     }
+
+
+@router.get("/stats")
+async def get_stats():
+    """
+    Get overall statistics about the in-memory analytics storage.
+    
+    Returns information about total events stored and time ranges.
+    """
+    analytics = get_analytics_service()
+    return await analytics.get_stats()
