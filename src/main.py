@@ -32,7 +32,8 @@ if settings.logfire_api_key:
     logfire.instrument_fastapi(
         app,
         capture_headers=True,
-        request_attributes_mapper=lambda request: {
+        request_attributes_mapper=lambda request, attributes: {
+            **attributes,
             "custom.path": request.url.path,
             "custom.method": request.method,
         },
