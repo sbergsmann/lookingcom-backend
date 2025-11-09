@@ -32,60 +32,60 @@ async def get_analytics_summary(
     return await analytics.get_analytics_summary(hours)
 
 
-@router.get("/searches")
-async def get_room_searches(
-    hours: Annotated[int, Query(ge=1, le=24, description="Number of hours to look back (1-24)")] = 24
-):
-    """
-    Get room search logs for the specified timespan.
+# @router.get("/searches")
+# async def get_room_searches(
+#     hours: Annotated[int, Query(ge=1, le=24, description="Number of hours to look back (1-24)")] = 24
+# ):
+#     """
+#     Get room search logs for the specified timespan.
     
-    Data is stored in-memory (max 10,000 events per type).
+#     Data is stored in-memory (max 10,000 events per type).
     
-    - **hours**: Number of hours to look back (1-24, default: 24)
-    """
-    analytics = get_analytics_service()
-    searches = await analytics.get_room_searches(hours)
-    return {
-        "timespan_hours": hours,
-        "total_searches": len(searches),
-        "searches": searches
-    }
+#     - **hours**: Number of hours to look back (1-24, default: 24)
+#     """
+#     analytics = get_analytics_service()
+#     searches = await analytics.get_room_searches(hours)
+#     return {
+#         "timespan_hours": hours,
+#         "total_searches": len(searches),
+#         "searches": searches
+#     }
 
 
-@router.get("/reservations")
-async def get_reservations(
-    hours: Annotated[int, Query(ge=1, le=24, description="Number of hours to look back (1-24)")] = 24
-):
-    """
-    Get reservation logs for the specified timespan.
+# @router.get("/reservations")
+# async def get_reservations(
+#     hours: Annotated[int, Query(ge=1, le=24, description="Number of hours to look back (1-24)")] = 24
+# ):
+#     """
+#     Get reservation logs for the specified timespan.
     
-    Data is stored in-memory (max 10,000 events per type).
+#     Data is stored in-memory (max 10,000 events per type).
     
-    - **hours**: Number of hours to look back (1-24, default: 24)
-    """
-    analytics = get_analytics_service()
-    reservations = await analytics.get_reservations(hours)
+#     - **hours**: Number of hours to look back (1-24, default: 24)
+#     """
+#     analytics = get_analytics_service()
+#     reservations = await analytics.get_reservations(hours)
     
-    # Calculate total revenue
-    total_revenue = sum(
-        res.get("data", {}).get("total_amount", 0)
-        for res in reservations
-    )
+#     # Calculate total revenue
+#     total_revenue = sum(
+#         res.get("data", {}).get("total_amount", 0)
+#         for res in reservations
+#     )
     
-    return {
-        "timespan_hours": hours,
-        "total_reservations": len(reservations),
-        "total_revenue": round(total_revenue, 2),
-        "reservations": reservations
-    }
+#     return {
+#         "timespan_hours": hours,
+#         "total_reservations": len(reservations),
+#         "total_revenue": round(total_revenue, 2),
+#         "reservations": reservations
+#     }
 
 
-@router.get("/stats")
-async def get_stats():
-    """
-    Get overall statistics about the in-memory analytics storage.
+# @router.get("/stats")
+# async def get_stats():
+#     """
+#     Get overall statistics about the in-memory analytics storage.
     
-    Returns information about total events stored and time ranges.
-    """
-    analytics = get_analytics_service()
-    return await analytics.get_stats()
+#     Returns information about total events stored and time ranges.
+#     """
+#     analytics = get_analytics_service()
+#     return await analytics.get_stats()

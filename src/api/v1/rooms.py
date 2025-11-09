@@ -42,10 +42,6 @@ async def search_rooms(request: SimplifiedRoomSearchRequest):
     """
     logfire.info(f"Simplified Room Search Request: {request.model_dump()}")
     
-    # Log analytics
-    analytics = get_analytics_service()
-    await analytics.log_room_search(request.model_dump(mode="json"))
-    
     try:
         settings = get_settings()
         client = CapCornClient()
@@ -115,6 +111,14 @@ async def search_rooms(request: SimplifiedRoomSearchRequest):
         
         logfire.info(f"Simplified Room Search found {len(all_options)} options across {len(date_ranges)} queries.")
         logfire.info(f"Room Search Response: {all_options}")
+        
+        # Log analytics with results count
+        analytics = get_analytics_service()
+        await analytics.log_room_search(
+            request.model_dump(mode="json"),
+            results_count=len(all_options)
+        )
+        
         return SimplifiedRoomSearchResponse(
             total_queries=len(date_ranges),
             total_options=len(all_options),

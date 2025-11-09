@@ -12,6 +12,7 @@ class AnalyticsEvent(BaseModel):
     timestamp: datetime
     event_type: str  # "room_search" or "reservation"
     data: dict[str, Any]
+    results_count: int | None = None  # Number of room options found (for searches)
 
 
 class AnalyticsService:
@@ -28,12 +29,19 @@ class AnalyticsService:
         self._reservations: deque[AnalyticsEvent] = deque(maxlen=max_events)
         self._lock = asyncio.Lock()
     
-    async def log_room_search(self, search_data: dict[str, Any]) -> None:
-        """Log a room search event"""
+    async def log_room_search(self, search_data: dict[str, Any], results_count: int = 0) -> None:
+        """
+        Log a room search event
+        
+        Args:
+            search_data: The search request data
+            results_count: Number of room options found in the search results
+        """
         event = AnalyticsEvent(
             timestamp=datetime.utcnow(),
             event_type="room_search",
-            data=search_data
+            data=search_data,
+            results_count=results_count
         )
         async with self._lock:
             self._room_searches.append(event)
@@ -57,7 +65,8 @@ class AnalyticsService:
                 {
                     "timestamp": event.timestamp.isoformat(),
                     "event_type": event.event_type,
-                    "data": event.data
+                    "data": event.data,
+                    "results_count": event.results_count
                 }
                 for event in self._room_searches
                 if event.timestamp >= cutoff_time
@@ -108,6 +117,13 @@ class AnalyticsService:
         # Get average booking value
         avg_booking_value = total_revenue / total_reservations if total_reservations > 0 else 0
         
+        # Calculate total rooms found across all searches
+        total_rooms_found = sum(
+            search.get("results_count", 0) or 0
+            for search in searches
+        )
+        avg_results_per_search = total_rooms_found / total_searches if total_searches > 0 else 0
+        
         return {
             "timespan_hours": hours,
             "total_searches": total_searches,
@@ -115,6 +131,8 @@ class AnalyticsService:
             "conversion_rate": round(conversion_rate, 2),
             "total_revenue": round(total_revenue, 2),
             "average_booking_value": round(avg_booking_value, 2),
+            "total_rooms_found": total_rooms_found,
+            "average_results_per_search": round(avg_results_per_search, 2),
             "popular_durations": dict(sorted(room_durations.items(), key=lambda x: x[1], reverse=True)[:5]),
             "searches": searches,
             "reservations": reservations
