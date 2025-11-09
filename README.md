@@ -138,7 +138,7 @@ lookingcom-backend/
 
 ## 🔌 API Endpoints
 
-### Health Check
+### ❤️ Health Check
 
 ```http
 GET /
@@ -146,6 +146,17 @@ GET /health
 ```
 
 Returns service status and version information.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "app": "CapCorn API Wrapper",
+  "version": "0.1.0"
+}
+```
+
+---
 
 ### 🏠 Room Search (Simplified)
 
@@ -174,6 +185,7 @@ POST /api/v1/rooms/search
 - Generates all possible date ranges within the timespan
 - Executes parallel searches for maximum performance
 - Returns aggregated results with date information
+- Automatically logs analytics
 
 **Response:**
 ```json
@@ -200,13 +212,33 @@ POST /api/v1/rooms/search
 }
 ```
 
-### 🏠 Room Availability (Direct)
+---
+
+### � Room Availability (Direct)
 
 ```http
 POST /api/v1/rooms/availability
 ```
 
 Direct access to CapCorn API with original format (for advanced users).
+
+**Request Body:**
+```json
+{
+  "language": 0,
+  "hotel_id": "9100",
+  "arrival": "2025-12-17",
+  "departure": "2025-12-20",
+  "rooms": [
+    {
+      "adults": 2,
+      "children": [{"age": 3}]
+    }
+  ]
+}
+```
+
+---
 
 ### 📝 Create Reservation
 
@@ -217,7 +249,6 @@ POST /api/v1/reservations
 **Request Body:**
 ```json
 {
-  "hotel_id": "9100",
   "room_type_code": "DZ",
   "number_of_units": 1,
   "meal_plan": 1,
@@ -246,6 +277,11 @@ POST /api/v1/reservations
 }
 ```
 
+**Notes:**
+- Hotel ID is automatically set to 9100
+- `meal_plan` defaults to 1 (Breakfast) if not provided
+- Automatically logs analytics
+
 **Response:**
 ```json
 {
@@ -254,6 +290,61 @@ POST /api/v1/reservations
   "reservation_id": "BOOK-12345"
 }
 ```
+
+---
+
+### 📊 Analytics Summary
+
+```http
+GET /api/v1/analytics/summary?hours=24
+```
+
+Get comprehensive analytics for room searches and reservations.
+
+**Query Parameters:**
+- `hours` (optional): Number of hours to look back (1-24, default: 24)
+
+**Response:**
+```json
+{
+  "timespan_hours": 24,
+  "total_searches": 42,
+  "total_reservations": 7,
+  "conversion_rate": 16.67,
+  "total_revenue": 4725.0,
+  "average_booking_value": 675.0,
+  "total_rooms_found": 1248,
+  "average_results_per_search": 29.71,
+  "popular_durations": {
+    "3": 15,
+    "7": 12,
+    "4": 10
+  },
+  "searches": [
+    {
+      "timestamp": "2025-11-09T10:30:00",
+      "event_type": "room_search",
+      "results_count": 24,
+      "data": {...}
+    }
+  ],
+  "reservations": [
+    {
+      "timestamp": "2025-11-09T11:15:00",
+      "event_type": "reservation",
+      "data": {...}
+    }
+  ]
+}
+```
+
+**Features:**
+- In-memory storage (data persists until server restart)
+- Max 10,000 events per type
+- Real-time conversion rate calculation
+- Revenue and booking metrics
+
+---
 
 ## ⚙️ Configuration
 
@@ -275,14 +366,81 @@ CAPCORN_PIN=...
 
 # CORS (comma-separated list or *)
 CORS_ORIGINS=*
+
+# Logfire (Monitoring & Observability)
+LOGFIRE_API_KEY=your_logfire_api_key
 ```
 
+### Meal Plans
+
+| Code | Description |
+|------|-------------|
+| 1    | Breakfast |
+| 2    | Half Board |
+| 3    | Full Board |
+| 4    | No Meals |
+| 5    | All Inclusive |
+
+### Room Types
+
+| Code | Description |
+|------|-------------|
+| 1    | Hotel Room |
+| 2    | Apartment / Holiday Home |
+
+---
+
+```bash
+uv run fastapi dev src/main.py
+```
+
+---
+
 ## 🛠️ Development
+
+### Running Tests
+
+```bash
+uv run pytest
+```
+
+### Code Formatting
+
+```bash
+uv run black src/
+uv run isort src/
+```
+
+### Type Checking
+
+```bash
+uv run mypy src/
+```
 
 ### Running with Hot Reload
 
 ```bash
 uv run fastapi dev src/main.py
+```
+
+---
+
+## 🐳 Deployment
+
+### Docker Support
+
+```bash
+# Build image
+docker build -t lookingcom-backend .
+
+# Run container
+docker run -p 8000:8000 --env-file .env lookingcom-backend
+```
+
+### Docker Compose
+
+```bash
+docker-compose up -d
 ```
 
 ### Production Considerations
@@ -294,9 +452,34 @@ uv run fastapi dev src/main.py
 - Use environment-specific configs
 - Set `DEBUG=False` in production
 
+- Set `DEBUG=False` in production
+
+---
+
 ## 📊 Analytics
 
-The backend is designed to integrate with analytics systems and dashboards:
+The backend includes a built-in analytics system that tracks all searches and reservations in real-time.
+
+### 🎯 Features
+
+- **In-Memory Storage**: Fast, lightweight tracking (max 10,000 events per type)
+- **Automatic Logging**: All searches and reservations are tracked automatically
+- **Real-Time Metrics**: Conversion rates, revenue, and booking patterns
+- **Flexible Timespan**: Query data from 1-24 hours back
+- **Results Tracking**: Logs number of room options found per search
+
+### 📈 Analytics Metrics
+
+The `/api/v1/analytics/summary` endpoint provides:
+
+- **total_searches**: Number of room searches performed
+- **total_reservations**: Number of bookings made
+- **conversion_rate**: Percentage of searches that resulted in bookings
+- **total_revenue**: Sum of all booking amounts
+- **average_booking_value**: Average price per reservation
+- **total_rooms_found**: Total room options discovered across all searches
+- **average_results_per_search**: Average number of options per search
+- **popular_durations**: Most searched stay lengths
 
 ### 🎯 MCP Server Integration
 
@@ -305,6 +488,17 @@ The API endpoints are consumed by Model Context Protocol (MCP) servers that:
 - Generate recommendations based on booking patterns
 - Provide natural language interfaces to the data
 - Power conversational analytics experiences
+
+- Power conversational analytics experiences
+
+---
+
+## 🙏 Acknowledgments
+
+- Built with [FastAPI](https://fastapi.tiangolo.com/)
+- Powered by [UV](https://github.com/astral-sh/uv)
+- Monitoring with [Logfire](https://logfire.pydantic.dev/)
+- Integrates with [CapCorn Hotel Management System](https://capcorn.at/)
 
 ## 🤝 Contributing
 
@@ -337,6 +531,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## 📞 Support
+
+For questions or issues:
+- Create an issue on GitHub
+- Contact: dev@looking.com
 
 ---
 
